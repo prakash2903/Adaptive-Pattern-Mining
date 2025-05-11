@@ -1,50 +1,93 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from data_stream import preprocess_data, download_dataset, get_stream_panes
+
+from data_stream import preprocess_data
+from data_stream import download_dataset 
+from data_stream import get_stream_panes
+
 from scps_tree import SCPSTree
 from drift_detector import detect_concept_drift
 from miner import mine_frequent_itemsets
-from visualizer import DriftTracker, plot_frequent_itemsets
 
-# === Streamlit Page Setup ===
+from visualizer import DriftTracker
+
+
 st.set_page_config(page_title="VSW-SCPS Miner", layout="wide")
 st.title("🧠 VSW-SCPS: Adaptive Frequent Itemset Miner")
 
-# === Sidebar Config ===
 st.sidebar.header("⚙️ Parameters")
 pane_size = st.sidebar.slider("Pane Size", min_value=5, max_value=100, value=10, step=5)
 min_support = st.sidebar.slider("Min Support", min_value=1, max_value=10, value=2)
 drift_threshold = st.sidebar.slider("Drift Threshold", min_value=0.1, max_value=1.0, value=0.3, step=0.05)
 init_window_panes = st.sidebar.number_input("Initial Window (panes)", min_value=1, max_value=10, value=1)
 
-# === Dataset Choice ===
 dataset_choice = st.sidebar.radio("Dataset", ["Test Dataset (50 txns)", "Online Retail (real)"])
 
-# === Load Dataset ===
+# We have used customized dataset of 50 transactions for quick testing purpose
 if dataset_choice == "Test Dataset (50 txns)":
     def preprocess_data(_):
         return [
-            ['milk', 'bread', 'butter'], ['milk', 'bread'], ['milk', 'butter'], ['bread', 'butter'], ['milk', 'bread'],
-            ['bread', 'butter'], ['milk', 'bread'], ['milk', 'butter'], ['milk', 'bread'], ['bread', 'butter'],
-            ['milk', 'cereal'], ['bread', 'cereal'], ['milk', 'bread'], ['cereal', 'butter'], ['milk', 'cereal'],
-            ['bread', 'butter'], ['cereal', 'bread'], ['milk', 'cereal'], ['milk', 'bread'], ['butter', 'cereal'],
-            ['coffee', 'cereal'], ['milk', 'coffee'], ['cereal', 'bread'], ['coffee', 'butter'], ['coffee', 'cereal'],
-            ['coffee', 'milk'], ['bread', 'coffee'], ['cereal', 'coffee'], ['cereal', 'milk'], ['butter', 'coffee'],
-            ['juice', 'tea'], ['snack', 'juice'], ['tea', 'juice'], ['snack', 'cereal'], ['tea', 'snack'],
-            ['tea', 'coffee'], ['juice', 'coffee'], ['juice', 'snack'], ['coffee', 'snack'], ['tea', 'cereal'],
-            ['pen', 'notebook'], ['notebook', 'eraser'], ['pen', 'eraser'], ['notebook', 'pencil'],
-            ['stapler', 'paper'], ['pen', 'notebook'], ['eraser', 'paper'], ['pen', 'stapler'],
-            ['notebook', 'pen'], ['notebook', 'paper']
+            ['milk', 'bread', 'butter'], 
+            ['milk', 'bread'], 
+            ['milk', 'butter'], 
+            ['bread', 'butter'], 
+            ['milk', 'bread'],
+            ['bread', 'butter'], 
+            ['milk', 'bread'], 
+            ['milk', 'butter'], 
+            ['milk', 'bread'], 
+            ['bread', 'butter'],
+            ['milk', 'cereal'], 
+            ['bread', 'cereal'], 
+            ['milk', 'bread'], 
+            ['cereal', 'butter'], 
+            ['milk', 'cereal'],
+            ['bread', 'butter'], 
+            ['cereal', 'bread'], 
+            ['milk', 'cereal'], 
+            ['milk', 'bread'], 
+            ['butter', 'cereal'],
+            ['coffee', 'cereal'], 
+            ['milk', 'coffee'], 
+            ['cereal', 'bread'], 
+            ['coffee', 'butter'], 
+            ['coffee', 'cereal'],
+            ['coffee', 'milk'], 
+            ['bread', 'coffee'], 
+            ['cereal', 'coffee'], 
+            ['cereal', 'milk'], 
+            ['butter', 'coffee'],
+            ['juice', 'tea'], 
+            ['snack', 'juice'], 
+            ['tea', 'juice'], 
+            ['snack', 'cereal'], 
+            ['tea', 'snack'],
+            ['tea', 'coffee'], 
+            ['juice', 'coffee'], 
+            ['juice', 'snack'], 
+            ['coffee', 'snack'], 
+            ['tea', 'cereal'],
+            ['pen', 'notebook'], 
+            ['notebook', 'eraser'], 
+            ['pen', 'eraser'], 
+            ['notebook', 'pencil'],
+            ['stapler', 'paper'], 
+            ['pen', 'notebook'], 
+            ['eraser', 'paper'], 
+            ['pen', 'stapler'],
+            ['notebook', 'pen'], 
+            ['notebook', 'paper']
         ]
     df = None
+
 else:
     df = download_dataset()
 
 transactions = preprocess_data(df)
 panes = list(get_stream_panes(transactions, pane_size=pane_size))
 
-# === Start Mining ===
+# Start Mining
 st.subheader("📦 Streaming Results")
 tree = SCPSTree()
 drift_tracker = DriftTracker()
@@ -84,15 +127,19 @@ for pane_index, pane in enumerate(panes):
         plt.xticks(rotation=45, ha='right')
         st.pyplot(fig)
 
-# === Plot drift rate over time ===
+
+# Plot drift rate over time
 st.subheader("📈 Concept Drift Rate Over Time")
 fig_drift, ax = plt.subplots()
 ax.plot(drift_tracker.pane_numbers, drift_tracker.drift_rates, marker='o', label="Drift Rate")
+
 for i, triggered in enumerate(drift_tracker.drift_flags):
     if triggered:
         ax.axvline(x=drift_tracker.pane_numbers[i], color='red', linestyle='--', alpha=0.6)
+
 ax.set_xlabel("Pane Number")
 ax.set_ylabel("Drift Triggered")
 ax.set_title("Concept Drift Detection Timeline")
 ax.grid(True)
+
 st.pyplot(fig_drift)

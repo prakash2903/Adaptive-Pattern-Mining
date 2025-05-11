@@ -1,5 +1,3 @@
-# scps_tree.py
-
 from collections import defaultdict
 
 class SCPSNode:
@@ -23,6 +21,7 @@ class SCPSNode:
             else:
                 self.pre_count += 1
 
+
 class SCPSTree:
     def __init__(self):
         self.root = SCPSNode("root")
@@ -39,11 +38,14 @@ class SCPSTree:
         node = self.root
         for idx, item in enumerate(items):
             is_tail = idx == len(items) - 1
+            
             if item in node.children:
                 child = node.children[item]
                 child.increase_count(current_tid > checkpoint_tid)
+            
             else:
                 child = SCPSNode(item_name=item, parent=node, is_tail=is_tail)
+            
                 if is_tail:
                     if current_tid > checkpoint_tid:
                         child.cur_count += 1
@@ -51,7 +53,9 @@ class SCPSTree:
                         child.pre_count += 1
                 node.children[item] = child
                 self.head_table[item].append(child)
+            
             node = child
+
 
     def _sort_transaction(self, transaction):
         """
@@ -61,16 +65,19 @@ class SCPSTree:
         freq_map = {item: sum(n.count for n in self.head_table[item]) for item in transaction if item in self.head_table}
         return sorted(transaction, key=lambda x: (-freq_map.get(x, 0), x))
 
+
     def print_tree(self, node=None, indent=0):
         if node is None:
             node = self.root
+        
         for child in node.children.values():
             line = f"{'  ' * indent}- {child.item} [{child.count}]"
+        
             if child.is_tail:
                 line += f" (pre: {child.pre_count}, cur: {child.cur_count})"
+        
             print(line)
             self.print_tree(child, indent + 1)
-
 
 
     def delete_expired_data(self):
@@ -80,7 +87,8 @@ class SCPSTree:
         sorted_items = sorted(self.head_table.keys(), key=lambda x: sum(n.count for n in self.head_table[x]))
 
         for item in sorted_items:
-            for node in list(self.head_table[item]):  # use a copy of the list
+            # use a copy of the list
+            for node in list(self.head_table[item]):
                 if not node.is_tail:
                     continue
 
@@ -100,7 +108,3 @@ class SCPSTree:
                 # Update tail counts
                 node.pre_count = node.cur_count
                 node.cur_count = 0
-
-        # You can optionally re-balance with BSM here (if you implement it)
-
-

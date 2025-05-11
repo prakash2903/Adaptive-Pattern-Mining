@@ -1,5 +1,3 @@
-# visualizer.py
-
 import matplotlib.pyplot as plt
 
 class DriftTracker:
@@ -16,6 +14,7 @@ class DriftTracker:
     def plot_drift(self):
         plt.figure(figsize=(10, 5))
         plt.plot(self.pane_numbers, self.drift_rates, marker='o', label="Drift Rate")
+        
         for i, triggered in enumerate(self.drift_flags):
             if triggered:
                 plt.axvline(x=self.pane_numbers[i], color='red', linestyle='--', alpha=0.6)

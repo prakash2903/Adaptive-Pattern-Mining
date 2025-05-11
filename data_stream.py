@@ -1,9 +1,3 @@
-# data_stream.py
-
-import pandas as pd
-import requests
-from io import BytesIO
-
 DATASET_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx"
 
 '''
@@ -100,7 +94,6 @@ def get_stream_panes(transactions, pane_size=500):
         yield transactions[i:i + pane_size]
 
 # Example of loading and streaming data
-
 from data_stream import download_dataset, preprocess_data, get_stream_panes
 
 df = download_dataset()
